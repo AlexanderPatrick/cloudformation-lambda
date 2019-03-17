@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "test": "jest --config=jest/jest.config.js",
+    "package": "aws cloudformation package --template-file=sam/template.yml --s3-bucket=alexander-cloudformation-artifacts --s3-prefix=cloudformation-lambda --output-template-file=sam/packaged-template.yml",
+    "plan": "aws cloudformation deploy --template-file sam/packaged-template.yml --capabilities=CAPABILITY_IAM --no-fail-on-empty-changeset --no-execute-changeset --stack-name CloudformationLambdaStack",
+    "deploy": "aws cloudformation deploy --template-file sam/packaged-template.yml --capabilities=CAPABILITY_IAM --no-fail-on-empty-changeset --stack-name CloudformationLambdaStack"
+  }
+}

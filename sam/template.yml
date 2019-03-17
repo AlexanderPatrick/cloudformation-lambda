@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Hello World SAM Template
+
+Parameters:
+  Environment:
+    Type: String
+    Default: development
+  Region:
+    Type: String
+    Default: us-east-1
+  CloudformationParameterFromParameterStore:
+    Type: 'AWS::SSM::Parameter::Value<String>'
+    Default: cloudformationParameterFromParameterStore
+    NoEcho: true
+  
+Resources:
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../lambdas/hello-world/code
+      Handler: index.handler
+      Runtime: nodejs8.10
+  # HelloCloudwatchEventFunction:
+  #   Type: AWS::Serverless::Function
+  #   Properties:
+  #     CodeUri: ../lambdas/hello-cloudwatch-event/code
+  #     Handler: index.handler
+  #     Runtime: nodejs8.10
+  #     Events:
+  #       PerMinuteEvent:
+  #         Type: Schedule
+  #         Properties:
+  #           Schedule: rate(1 minute)
+  HelloEnvVarsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../lambdas/hello-env-vars/code
+      Handler: index.handler
+      Runtime: nodejs8.10
+      Environment:
+        Variables:
+          environmentVariableFromCloudformationTemplate: This environment variable value is set in the cloudformation template.
+          environmentVariableFromParameterStore: '{{resolve:ssm:/environmentVariableFromParameterStore:1}}'
+          cloudformationParameterFromParameterStore: !Ref CloudformationParameterFromParameterStore
+  HelloParameterStoreFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../lambdas/hello-parameter-store/code
+      Handler: index.handler
+      Runtime: nodejs8.10
+      Timeout: 10
+      Environment:
+        Variables:
+          Environment: !Ref Environment
+          Region: !Ref Region
+      Layers:
+        - !Ref ParameterStoreEnvLayer
+      Policies:
+        - Statement:
+          - Effect: Allow
+            Action:
+              - ssm:GetParameters
+            Resource:
+              - !Join
+                - ''
+                - - arn:aws:ssm:us-east-1:724654388325:parameter/
+                  - !Ref Environment
+                  - /*
+  ParameterStoreEnvLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      ContentUri: ../layers/parameter-store-env/
+      CompatibleRuntimes:
+        - nodejs8.10
